@@ -183,6 +183,15 @@ export default function QrisCrossCheck({ activeFile }: QrisCrossCheckProps) {
     let guessedDate = '';
     let guessedFee = '';
 
+    // Prioritize "Dari Rekening Bank" specifically if it exists
+    const priorityOrderIdCol = headers.find(h => {
+      const hLower = h.toLowerCase().trim();
+      return hLower === 'dari rekening bank' || hLower === 'rekening bank' || hLower.startsWith('dari rekening');
+    });
+    if (priorityOrderIdCol) {
+      guessedOrderId = priorityOrderIdCol;
+    }
+
     const orderIdKeywords = ['order', 'ord', 'ref', 'trx', 'transaksi_id', 'id_transaksi', 'id order', 'order id', 'no_ref', 'reference', 'transaksi', 'notransaksi'];
     const nominalKeywords = ['nominal', 'amount', 'harga', 'total', 'bayar', 'jumlah', 'wd', 'credit', 'debit', 'value', 'net amount', 'saldo', 'total tagihan', 'nilai'];
     const userIdKeywords = ['user', 'username', 'member', 'id_member', 'member_id', 'id_user', 'user_id', 'login', 'pengirim', 'akun', 'id akun'];
@@ -539,11 +548,23 @@ export default function QrisCrossCheck({ activeFile }: QrisCrossCheckProps) {
     return null;
   };
 
-  // Extract order ID cleanly with pattern matching priority
+  // Extract order ID cleanly with pattern matching priority, strictly prioritizing the selected/mapped column first
   const extractOrderIdFromRow = (row: any, fallbackCol: string): string => {
     if (!row) return '';
-    // 1. Search all cells in this row to see if any cell contains a specific order ID pattern:
-    // matching Minera followed by digits, or LGBDT followed by digits, or generally Minera plus alphanumeric chars
+    
+    // 1. Strictly prioritize the selected/mapped column first
+    if (fallbackCol && row[fallbackCol] !== undefined) {
+      const valStr = String(row[fallbackCol] ?? '').trim();
+      const match = valStr.match(/(Minera\d+)/i) || valStr.match(/(LGBDT-[a-zA-Z0-9]+)/i) || valStr.match(/(Minera[a-zA-Z0-9]+)/i);
+      if (match) {
+        return match[1];
+      }
+      if (valStr) {
+        return valStr;
+      }
+    }
+
+    // 2. Fallback to searching all columns only if the mapped column is not specified or empty (last resort)
     for (const key of Object.keys(row)) {
       const valStr = String(row[key] ?? '').trim();
       const match = valStr.match(/(Minera\d+)/i) || valStr.match(/(LGBDT-[a-zA-Z0-9]+)/i) || valStr.match(/(Minera[a-zA-Z0-9]+)/i);
@@ -551,8 +572,8 @@ export default function QrisCrossCheck({ activeFile }: QrisCrossCheckProps) {
         return match[1];
       }
     }
-    // 2. Fallback to the selected/mapped column
-    return String(row[fallbackCol] ?? '').trim();
+
+    return '';
   };
 
   // --- RECONCILIATION ENGINE CRITICAL CALCULATIONS ---
