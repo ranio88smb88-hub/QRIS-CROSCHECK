@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-immersive-bg: #09090b;
+  --color-immersive-panel: #18181b;
+  --color-immersive-accent: #27272a;
+  --color-immersive-border: #27272a;
+  --color-immersive-text: #fafafa;
+  --color-immersive-muted: #a1a1aa;
+  --color-immersive-dim: #52525b;
+}
+
+@utility animate-spin-slow {
+  animation: spin 12s linear infinite;
+}
+
+/* Base style adjustments mimicking Immersive UI outer border frame */
+html, body {
+  background-color: var(--color-immersive-bg);
+  color: var(--color-immersive-text);
+  font-family: var(--font-sans);
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Modern responsive styling for tables & custom dark cards */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Excel Cross-Check & Report Formatter",
+  "description": "Sleek dark-mode dashboard for uploading XLSX/CSV files, cross-checking data, and generating clean reports using customized formatting templates.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
