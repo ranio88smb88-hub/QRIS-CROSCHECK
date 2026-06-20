@@ -95,17 +95,74 @@ export default function QrisCrossCheck({ activeFile }: QrisCrossCheckProps) {
   const vendorFileInputRef = useRef<HTMLInputElement>(null);
   const adminFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Parse TSV text copied from Excel
+  // Parse TSV/CSV text copied from Excel or logs
   const parsePasteContent = (text: string) => {
     const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
     if (lines.length === 0) return { headers: [], rows: [] };
 
-    const firstLineCols = lines[0].split('\t').map(c => c.trim());
-    const headers = firstLineCols.map((col, idx) => col || `Kolom ${idx + 1}`);
+    // Detect separator
+    let sep = '\t';
+    const firstLine = lines[0];
+    if (!firstLine.includes('\t')) {
+      if (firstLine.includes('","')) {
+        sep = ',';
+      } else if (firstLine.includes('";"')) {
+        sep = ';';
+      } else if (firstLine.includes(';')) {
+        sep = ';';
+      } else if (firstLine.includes(',')) {
+        sep = ',';
+      }
+    }
+
+    // Helper to safely split CSV/TSV line respecting quotes
+    const splitLine = (line: string, separator: string): string[] => {
+      const result: string[] = [];
+      let currentCol = '';
+      let insideQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          insideQuotes = !insideQuotes;
+        } else if (char === separator && !insideQuotes) {
+          result.push(currentCol.trim());
+          currentCol = '';
+        } else {
+          currentCol += char;
+        }
+      }
+      result.push(currentCol.trim());
+      
+      // Clean leading/trailing quotes from each cell
+      return result.map(c => {
+        let cleaned = c;
+        if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+          cleaned = cleaned.substring(1, cleaned.length - 1);
+        }
+        return cleaned.trim();
+      });
+    };
+
+    const firstLineCols = splitLine(lines[0], sep);
+    // If the first line doesn't seem to contain headers but contains actual data, we can keep headers as Kolom 1, Kolom 2...
+    // Let's check if the first line is standard headers or actual records (e.g. contains "Minera" or dates)
+    const isFirstLineDataRecord = lines[0].toLowerCase().includes('minera') || /\d{4}-\d{2}-\d{2}/.test(lines[0]);
+    
+    let headers: string[] = [];
+    let startIdx = 1;
+    
+    if (isFirstLineDataRecord) {
+      headers = firstLineCols.map((_, idx) => `Kolom ${idx + 1}`);
+      startIdx = 0;
+    } else {
+      headers = firstLineCols.map((col, idx) => col || `Kolom ${idx + 1}`);
+    }
+
     const rows: Record<string, string>[] = [];
 
-    for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split('\t').map(c => c.trim());
+    for (let i = startIdx; i < lines.length; i++) {
+      const cols = splitLine(lines[i], sep);
       if (cols.length === 0 || (cols.length === 1 && !cols[0])) continue;
 
       const rowObj: Record<string, string> = {};
@@ -213,9 +270,9 @@ export default function QrisCrossCheck({ activeFile }: QrisCrossCheckProps) {
 
     return {
       orderIdCol: guessedOrderId || headers[0] || '',
-      nominalCol: guessedNominal || headers[1] || headers[0] || '',
-      userIdCol: guessedUserId || headers[2] || headers[0] || '',
-      dateCol: guessedDate || headers[3] || headers[0] || '',
+      nominalCol: guessedNominal || '',
+      userIdCol: guessedUserId || '',
+      dateCol: guessedDate || '',
       feeCol: guessedFee || ''
     };
   };
@@ -482,6 +539,22 @@ export default function QrisCrossCheck({ activeFile }: QrisCrossCheckProps) {
     return null;
   };
 
+  // Extract order ID cleanly with pattern matching priority
+  const extractOrderIdFromRow = (row: any, fallbackCol: string): string => {
+    if (!row) return '';
+    // 1. Search all cells in this row to see if any cell contains a specific order ID pattern:
+    // matching Minera followed by digits, or LGBDT followed by digits, or generally Minera plus alphanumeric chars
+    for (const key of Object.keys(row)) {
+      const valStr = String(row[key] ?? '').trim();
+      const match = valStr.match(/(Minera\d+)/i) || valStr.match(/(LGBDT-[a-zA-Z0-9]+)/i) || valStr.match(/(Minera[a-zA-Z0-9]+)/i);
+      if (match) {
+        return match[1];
+      }
+    }
+    // 2. Fallback to the selected/mapped column
+    return String(row[fallbackCol] ?? '').trim();
+  };
+
   // --- RECONCILIATION ENGINE CRITICAL CALCULATIONS ---
   const results = useMemo(() => {
     let vRows = vendorData.rows;
@@ -536,19 +609,21 @@ export default function QrisCrossCheck({ activeFile }: QrisCrossCheckProps) {
     // Hash maps for quick search Lookup
     const adminMap = new Map<string, { nominal: number; r: any }>();
     aRows.forEach(row => {
-      const oid = String(row[aOrderIdCol] ?? '').trim().toLowerCase();
-      if (oid) {
-        const nom = cleanNumber(row[aNominalCol]);
-        adminMap.set(oid, { nominal: nom, r: row });
+      const oid = extractOrderIdFromRow(row, aOrderIdCol).trim();
+      const oidLower = oid.toLowerCase();
+      if (oidLower) {
+        const nom = aNominalCol ? cleanNumber(row[aNominalCol]) : 0;
+        adminMap.set(oidLower, { nominal: nom, r: row });
       }
     });
 
     const vendorMap = new Map<string, { nominal: number; r: any }>();
     vRows.forEach(row => {
-      const oid = String(row[vOrderIdCol] ?? '').trim().toLowerCase();
-      if (oid) {
-        const nom = cleanNumber(row[vNominalCol]);
-        vendorMap.set(oid, { nominal: nom, r: row });
+      const oid = extractOrderIdFromRow(row, vOrderIdCol).trim();
+      const oidLower = oid.toLowerCase();
+      if (oidLower) {
+        const nom = vNominalCol ? cleanNumber(row[vNominalCol]) : 0;
+        vendorMap.set(oidLower, { nominal: nom, r: row });
       }
     });
 
@@ -561,10 +636,10 @@ export default function QrisCrossCheck({ activeFile }: QrisCrossCheckProps) {
     let vendorTotalSum = 0;
     let vendorTotalFee = 0;
     vRows.forEach(row => {
-      const oid = String(row[vOrderIdCol] ?? '').trim();
+      const oid = extractOrderIdFromRow(row, vOrderIdCol).trim();
       const oidLower = oid.toLowerCase();
-      const uid = String(row[vUserIdCol] ?? '').trim() || '-';
-      const nom = cleanNumber(row[vNominalCol]);
+      const uid = vUserIdCol ? (String(row[vUserIdCol] ?? '').trim() || '-') : '-';
+      const nom = vNominalCol ? cleanNumber(row[vNominalCol]) : 0;
       vendorTotalSum += nom;
 
       const feeVal = vFeeCol ? cleanNumber(row[vFeeCol]) : 0;
@@ -593,10 +668,10 @@ export default function QrisCrossCheck({ activeFile }: QrisCrossCheckProps) {
     let adminTotalSum = 0;
     let adminTotalFee = 0;
     aRows.forEach(row => {
-      const oid = String(row[aOrderIdCol] ?? '').trim();
+      const oid = extractOrderIdFromRow(row, aOrderIdCol).trim();
       const oidLower = oid.toLowerCase();
-      const uid = String(row[aUserIdCol] ?? '').trim() || '-';
-      const nom = cleanNumber(row[aNominalCol]);
+      const uid = aUserIdCol ? (String(row[aUserIdCol] ?? '').trim() || '-') : '-';
+      const nom = aNominalCol ? cleanNumber(row[aNominalCol]) : 0;
       adminTotalSum += nom;
 
       const feeVal = aFeeCol ? cleanNumber(row[aFeeCol]) : 0;
@@ -833,6 +908,7 @@ export default function QrisCrossCheck({ activeFile }: QrisCrossCheckProps) {
                     onChange={(e) => setVendorData({ ...vendorData, mappedNominal: e.target.value })}
                     className="bg-[#18181b] border border-[#3f3f46] text-white py-0.5 px-1.5 rounded text-[10px] focus:outline-none"
                   >
+                    <option value="">- Tidak Ada / Opsional -</option>
                     {vendorData.headers.map(h => <option key={h} value={h}>{h}</option>)}
                   </select>
                 </div>
@@ -843,6 +919,7 @@ export default function QrisCrossCheck({ activeFile }: QrisCrossCheckProps) {
                     onChange={(e) => setVendorData({ ...vendorData, mappedUserId: e.target.value })}
                     className="bg-[#18181b] border border-[#3f3f46] text-white py-0.5 px-1.5 rounded text-[10px] focus:outline-none"
                   >
+                    <option value="">- Tidak Ada / Opsional -</option>
                     {vendorData.headers.map(h => <option key={h} value={h}>{h}</option>)}
                   </select>
                 </div>
@@ -991,6 +1068,7 @@ export default function QrisCrossCheck({ activeFile }: QrisCrossCheckProps) {
                     onChange={(e) => setAdminData({ ...adminData, mappedNominal: e.target.value })}
                     className="bg-[#18181b] border border-[#3f3f46] text-white py-0.5 px-1.5 rounded text-[10px] focus:outline-none"
                   >
+                    <option value="">- Tidak Ada / Opsional -</option>
                     {adminData.headers.map(h => <option key={h} value={h}>{h}</option>)}
                   </select>
                 </div>
@@ -1001,6 +1079,7 @@ export default function QrisCrossCheck({ activeFile }: QrisCrossCheckProps) {
                     onChange={(e) => setAdminData({ ...adminData, mappedUserId: e.target.value })}
                     className="bg-[#18181b] border border-[#3f3f46] text-white py-0.5 px-1.5 rounded text-[10px] focus:outline-none"
                   >
+                    <option value="">- Tidak Ada / Opsional -</option>
                     {adminData.headers.map(h => <option key={h} value={h}>{h}</option>)}
                   </select>
                 </div>

@@ -23,10 +23,10 @@ export default function Instructions({ onGoToUpload }: InstructionsProps) {
     <div className="space-y-8 max-w-4xl">
       
       {/* Welcome Banner */}
-      <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-6 md:p-8 space-y-4">
+      <div className="bg-[#18181b]/70 backdrop-blur-md border border-[#27272a] rounded-xl p-6 md:p-8 space-y-4">
         <div className="flex items-center gap-2">
           <Sparkles className="text-white animate-pulse" size={18} />
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider font-display">ReportXpress Dashboard</h3>
+          <h3 className="text-sm font-bold text-white uppercase tracking-wider font-display">LIGABANDOT Admin Auditor</h3>
         </div>
         <p className="text-xs text-[#a1a1aa] leading-relaxed">
           Aplikasi asisten finance ini didesain khusus untuk melipatgandakan produktivitas Anda dalam memproses data Excel, melakukan pencocokan data (cross check), serta menyusun ulang laporan ke dalam berbagai format standar salinan teks secara instan langsung di komputer Anda.

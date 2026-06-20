@@ -121,15 +121,28 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="h-screen w-full bg-[#09090b] text-[#fafafa] font-sans flex flex-col md:flex-row overflow-hidden border-0 md:border-8 border-[#18181b] antialiased">
+    <div 
+      className="h-screen w-full text-[#fafafa] font-sans flex flex-col md:flex-row overflow-hidden border-0 md:border-8 border-amber-500/10 antialiased relative"
+      style={{
+        backgroundImage: `linear-gradient(rgba(10, 10, 12, 0.9), rgba(9, 9, 11, 0.95)), url("https://cdn.areabermain.club/assets/cdn/az9/2026/01/31/20260131/367622c25e169a98cf14404db51cb963/background-web-ligabandot-31-1-2026.jpg")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}
+    >
       
       {/* MOBILE HEADER BAR */}
-      <header className="md:hidden w-full bg-[#09090b] border-b border-[#27272a] px-4 py-3.5 flex items-center justify-between z-20 shrink-0">
+      <header className="md:hidden w-full bg-[#0c0c0e]/95 backdrop-blur-md border-b border-amber-500/20 px-4 py-2.5 flex items-center justify-between z-20 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 bg-[#3b82f6] rounded-md shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-          <div>
-            <h1 className="text-sm font-bold text-white tracking-tight">ReportXpress</h1>
-          </div>
+          <img 
+            src="https://cdn.areabermain.club/assets/cdn/az1/2025/10/15/20251015/e94bdb4085e68cc3a0f0800de144b38b/ligabandot-logo2-1.png" 
+            alt="LIGABANDOT" 
+            className="h-8 object-contain"
+            referrerPolicy="no-referrer"
+          />
+          <span className="text-[10px] font-sans font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+            AUDITOR
+          </span>
         </div>
 
         <button
@@ -213,13 +226,20 @@ export default function DashboardLayout({
       )}
 
       {/* DESKTOP SIDEBAR */}
-      <aside className="hidden md:flex md:w-64 border-r border-[#27272a] bg-[#09090b] flex-col justify-between shrink-0 h-full overflow-y-auto">
+      <aside className="hidden md:flex md:w-64 border-r border-[#27272a]/60 bg-[#09090b]/90 backdrop-blur-md flex-col justify-between shrink-0 h-full overflow-y-auto z-10">
         <div className="p-6">
           
           {/* Logo Brand Header */}
-          <div className="flex items-center gap-2 mb-8 select-none">
-            <div className="w-6 h-6 bg-[#3b82f6] rounded-md shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-            <h1 className="font-bold text-lg tracking-tight text-white">ReportXpress</h1>
+          <div className="flex flex-col items-center gap-2 mb-6 select-none border-b border-zinc-800/60 pb-5">
+            <img 
+              src="https://cdn.areabermain.club/assets/cdn/az1/2025/10/15/20251015/e94bdb4085e68cc3a0f0800de144b38b/ligabandot-logo2-1.png" 
+              alt="LIGABANDOT" 
+              className="h-14 object-contain"
+              referrerPolicy="no-referrer"
+            />
+            <span className="text-[10px] font-mono font-bold tracking-widest text-[#a1a1aa] uppercase mt-1">
+              FINANCE AUDITOR
+            </span>
           </div>
 
           {/* Navigation Links list */}
@@ -300,10 +320,10 @@ export default function DashboardLayout({
       </aside>
 
       {/* CORE DISPLAY WINDOW FRAME */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#09090b]">
+      <main className="flex-1 flex flex-col h-full overflow-hidden bg-transparent z-10">
         
         {/* Dynamic Nav Header Bar */}
-        <header className="h-16 border-b border-[#27272a] flex items-center justify-between px-8 bg-[#09090b]/80 backdrop-blur-md sticky top-0 z-10 shrink-0">
+        <header className="h-16 border-b border-[#27272a]/60 flex items-center justify-between px-8 bg-[#09090b]/80 backdrop-blur-md sticky top-0 z-10 shrink-0">
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-[#71717a]">
               Pages / {menuItems.find(item => item.id === activeTab)?.label}
@@ -332,9 +352,9 @@ export default function DashboardLayout({
         </section>
 
         {/* Global Footer element */}
-        <footer className="px-8 py-3 border-t border-[#27272a] bg-[#0c0c0e]/40 flex flex-col sm:flex-row sm:items-center justify-between text-[10px] text-[#52525b] gap-2 shrink-0">
+        <footer className="px-8 py-3 border-t border-[#27272a]/60 bg-[#0c0c0e]/60 flex flex-col sm:flex-row sm:items-center justify-between text-[10px] text-[#52525b] gap-2 shrink-0">
           <div>
-            <span>© 2026 ReportXpress Excel Auditor.</span>
+            <span>© 2026 LIGABANDOT Admin Auditor.</span>
             <span className="hidden sm:inline"> Terenkripsi penuh & diproses langsung di memori browser lokal.</span>
           </div>
           <div className="flex items-center gap-3">
