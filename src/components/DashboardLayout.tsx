@@ -121,21 +121,14 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="h-screen w-full bg-[#060608] text-[#fafafa] font-sans flex flex-col md:flex-row overflow-hidden border-0 md:border-8 border-[#16161a] antialiased">
+    <div className="h-screen w-full bg-[#09090b] text-[#fafafa] font-sans flex flex-col md:flex-row overflow-hidden border-0 md:border-8 border-[#18181b] antialiased">
       
       {/* MOBILE HEADER BAR */}
-      <header className="md:hidden w-full bg-[#060608] border-b border-[#27272a]/60 px-4 py-3 flex items-center justify-between z-20 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <img 
-            src="https://cdn.areabermain.club/assets/cdn/az1/2025/10/15/20251015/e94bdb4085e68cc3a0f0800de144b38b/ligabandot-logo2-1.png" 
-            alt="LIGABANDOT" 
-            className="h-8 w-auto object-contain drop-shadow-[0_0_6px_rgba(234,179,8,0.25)]" 
-            referrerPolicy="no-referrer" 
-          />
+      <header className="md:hidden w-full bg-[#09090b] border-b border-[#27272a] px-4 py-3.5 flex items-center justify-between z-20 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 bg-[#3b82f6] rounded-md shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
           <div>
-            <h1 className="text-xs font-black text-amber-400 tracking-tight flex items-center gap-1">
-              reportXpress <span className="text-white font-semibold">LIGABANDOT</span>
-            </h1>
+            <h1 className="text-sm font-bold text-white tracking-tight">ReportXpress</h1>
           </div>
         </div>
 
@@ -173,14 +166,14 @@ export default function DashboardLayout({
                     onClick={() => handleNavClick(item.id, item.disabled)}
                     className={`w-full p-3 rounded-lg flex items-center justify-between text-left transition-all ${
                       isActive 
-                        ? 'bg-gradient-to-r from-amber-500/15 to-amber-500/5 border-l-2 border-amber-400 text-amber-300 font-bold' 
+                        ? 'bg-[#27272a] text-white' 
                         : item.disabled 
                           ? 'opacity-30 cursor-not-allowed text-[#52525b]' 
                           : 'text-[#a1a1aa] hover:bg-[#18181b]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon size={16} className={isActive ? 'text-amber-400' : 'text-[#a1a1aa]'} />
+                      <Icon size={16} className={isActive ? 'text-white' : 'text-[#a1a1aa]'} />
                       <div>
                         <div className="text-xs font-semibold">{item.label}</div>
                         <div className="text-[9px] text-[#71717a]">{item.description}</div>
@@ -220,25 +213,13 @@ export default function DashboardLayout({
       )}
 
       {/* DESKTOP SIDEBAR */}
-      <aside className="hidden md:flex md:w-64 border-r border-[#27272a]/60 bg-[#060608] flex-col justify-between shrink-0 h-full overflow-y-auto">
+      <aside className="hidden md:flex md:w-64 border-r border-[#27272a] bg-[#09090b] flex-col justify-between shrink-0 h-full overflow-y-auto">
         <div className="p-6">
           
           {/* Logo Brand Header */}
-          <div className="flex flex-col gap-2.5 mb-8 select-none border-b border-[#27272a]/40 pb-5">
-            <div className="flex justify-center items-center py-2 bg-gradient-to-b from-[#18181b] to-black border border-[#27272a]/40 rounded-xl px-4 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
-              <img 
-                src="https://cdn.areabermain.club/assets/cdn/az1/2025/10/15/20251015/e94bdb4085e68cc3a0f0800de144b38b/ligabandot-logo2-1.png" 
-                alt="LIGABANDOT" 
-                className="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(234,179,8,0.3)] animate-pulse"
-                referrerPolicy="no-referrer" 
-              />
-            </div>
-            <div className="text-center">
-              <h1 className="text-sm font-black text-amber-400 tracking-tight flex items-center justify-center gap-1">
-                reportXpress <span className="text-white font-semibold">LIGABANDOT</span>
-              </h1>
-              <p className="text-[8px] text-[#71717a] font-mono uppercase tracking-wider mt-0.5">Excel Automation Suite</p>
-            </div>
+          <div className="flex items-center gap-2 mb-8 select-none">
+            <div className="w-6 h-6 bg-[#3b82f6] rounded-md shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+            <h1 className="font-bold text-lg tracking-tight text-white">ReportXpress</h1>
           </div>
 
           {/* Navigation Links list */}
@@ -258,14 +239,14 @@ export default function DashboardLayout({
                     onClick={() => handleNavClick(item.id, item.disabled)}
                     className={`w-full px-3 py-2 rounded-md flex items-center justify-between text-left group transition-all cursor-pointer ${
                       isActive 
-                        ? 'bg-gradient-to-r from-amber-500/15 to-amber-500/5 border-l-2 border-amber-400 text-amber-300 font-bold' 
+                        ? 'bg-[#27272a] text-white font-medium' 
                         : item.disabled 
                           ? 'opacity-25 cursor-not-allowed text-[#52525b]' 
                           : 'text-[#a1a1aa] hover:text-white hover:bg-[#18181b]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon size={14} className={isActive ? 'text-amber-400' : 'text-[#a1a1aa] group-hover:text-white transition-colors'} />
+                      <Icon size={14} className={isActive ? 'text-white' : 'text-[#a1a1aa] group-hover:text-white transition-colors'} />
                       <span className="text-xs">{item.label}</span>
                     </div>
 
@@ -351,9 +332,9 @@ export default function DashboardLayout({
         </section>
 
         {/* Global Footer element */}
-        <footer className="px-8 py-3 border-t border-[#27272a]/60 bg-[#0c0c0e]/40 flex flex-col sm:flex-row sm:items-center justify-between text-[10px] text-[#52525b] gap-2 shrink-0">
+        <footer className="px-8 py-3 border-t border-[#27272a] bg-[#0c0c0e]/40 flex flex-col sm:flex-row sm:items-center justify-between text-[10px] text-[#52525b] gap-2 shrink-0">
           <div>
-            <span>© 2026 reportXpress LIGABANDOT.</span>
+            <span>© 2026 ReportXpress Excel Auditor.</span>
             <span className="hidden sm:inline"> Terenkripsi penuh & diproses langsung di memori browser lokal.</span>
           </div>
           <div className="flex items-center gap-3">

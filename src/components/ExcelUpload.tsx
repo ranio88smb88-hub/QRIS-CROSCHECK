@@ -229,8 +229,8 @@ export default function ExcelUpload({ onUploadSuccess }: ExcelUploadProps) {
         id="drag-upload-container"
         className={`relative flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-10 md:p-14 text-center transition-all ${
           dragActive 
-            ? 'border-amber-500 bg-amber-950/10' 
-            : 'border-[#27272a] bg-[#18181b] hover:border-amber-500/40 hover:bg-[#18181b]/80'
+            ? 'border-[#3b82f6] bg-[#1a1f2e]' 
+            : 'border-[#27272a] bg-[#18181b] hover:border-[#3e3e42] hover:bg-[#18181b]/80'
         }`}
         onDragEnter={handleDrag}
         onDragOver={handleDrag}
@@ -246,7 +246,7 @@ export default function ExcelUpload({ onUploadSuccess }: ExcelUploadProps) {
         />
 
         <div className="p-3 bg-[#27272a] rounded-lg text-[#fafafa] mb-4">
-          <Upload size={22} className={dragActive ? 'animate-bounce text-amber-400' : ''} />
+          <Upload size={22} className={dragActive ? 'animate-bounce text-[#3b82f6]' : ''} />
         </div>
 
         <h3 className="text-base font-semibold text-[#fafafa] mb-1 tracking-tight">
@@ -258,14 +258,14 @@ export default function ExcelUpload({ onUploadSuccess }: ExcelUploadProps) {
 
         <button
           onClick={onButtonClick}
-          className="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-black rounded-md text-xs transition cursor-pointer flex items-center gap-1.5 shadow-[0_0_15px_rgba(234,179,8,0.2)]"
+          className="px-4 py-2 bg-white hover:bg-zinc-200 text-black font-semibold rounded-md text-xs transition cursor-pointer flex items-center gap-1.5"
         >
           <FileSpreadsheet size={13} />
           <span>Pilih File dari Komputer</span>
         </button>
 
         {dragActive && (
-          <div className="absolute inset-0 w-full h-full rounded-xl bg-amber-500/5 pointer-events-none" />
+          <div className="absolute inset-0 w-full h-full rounded-xl bg-blue-500/5 pointer-events-none" />
         )}
       </div>
 
