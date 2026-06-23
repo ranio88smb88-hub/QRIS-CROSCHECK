@@ -47,4 +47,4 @@ export interface CustomTemplate {
   createdAt: string;
 }
 
-export type ActiveTab = 'upload' | 'table' | 'sc-buang-dana' | 'wd-pending' | 'order-summary' | 'template-builder' | 'instructions' | 'qris-crosscheck' | 'naik-saldo-qris';
+export type ActiveTab = 'upload' | 'table' | 'sc-buang-dana' | 'wd-pending' | 'order-summary' | 'template-builder' | 'instructions' | 'qris-crosscheck' | 'naik-saldo-qris' | 'peminjaman-dana';

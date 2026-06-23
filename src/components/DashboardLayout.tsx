@@ -19,7 +19,8 @@ import {
   ChevronRight,
   TrendingUp,
   CloudLightning,
-  MonitorCheck
+  MonitorCheck,
+  DollarSign
 } from 'lucide-react';
 import { UploadedFile, ActiveTab } from '../types';
 
@@ -110,6 +111,14 @@ export default function DashboardLayout({
       icon: TrendingUp, 
       badge: 'Kalkulator',
       description: 'Penyesuaian saldo & dashboard',
+      disabled: false
+    },
+    { 
+      id: 'peminjaman-dana' as ActiveTab, 
+      label: 'Report Peminjaman Dana', 
+      icon: DollarSign, 
+      badge: 'Baru',
+      description: 'Format rekon peminjaman dana',
       disabled: false
     },
   ];

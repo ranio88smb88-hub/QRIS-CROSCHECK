@@ -17,6 +17,7 @@ import TemplateVisualizer from './components/TemplateVisualizer';
 import Instructions from './components/Instructions';
 import QrisCrossCheck from './components/QrisCrossCheck';
 import NaikSaldoQris from './components/NaikSaldoQris';
+import PeminjamanDana from './components/PeminjamanDana';
 import { UploadedFile, ActiveTab } from './types';
 
 export default function App() {
@@ -207,6 +208,12 @@ export default function App() {
           {activeTab === 'naik-saldo-qris' && (
             <div className="space-y-6">
               <NaikSaldoQris />
+            </div>
+          )}
+
+          {activeTab === 'peminjaman-dana' && (
+            <div className="space-y-6">
+              <PeminjamanDana />
             </div>
           )}
 
