@@ -227,10 +227,10 @@ export default function ExcelUpload({ onUploadSuccess }: ExcelUploadProps) {
       {/* Upload Drag Card */}
       <div 
         id="drag-upload-container"
-        className={`relative flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-10 md:p-14 text-center transition-all ${
+        className={`relative flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-10 md:p-14 text-center transition-all backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] ${
           dragActive 
-            ? 'border-[#3b82f6] bg-[#1a1f2e]' 
-            : 'border-[#27272a] bg-[#18181b] hover:border-[#3e3e42] hover:bg-[#18181b]/80'
+            ? 'border-amber-400/80 bg-amber-500/10' 
+            : 'border-white/15 bg-black/20 hover:border-amber-500/50 hover:bg-black/30'
         }`}
         onDragEnter={handleDrag}
         onDragOver={handleDrag}
@@ -245,34 +245,34 @@ export default function ExcelUpload({ onUploadSuccess }: ExcelUploadProps) {
           onChange={handleChange}
         />
 
-        <div className="p-3 bg-[#27272a] rounded-lg text-[#fafafa] mb-4">
-          <Upload size={22} className={dragActive ? 'animate-bounce text-[#3b82f6]' : ''} />
+        <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl text-[#fafafa] mb-4 border border-white/15">
+          <Upload size={24} className={dragActive ? 'animate-bounce text-amber-400' : 'text-amber-400'} />
         </div>
 
-        <h3 className="text-base font-semibold text-[#fafafa] mb-1 tracking-tight">
+        <h3 className="text-base font-semibold text-[#fafafa] mb-1 tracking-tight font-display">
           Seret & Lepas file Excel / CSV Anda ke sini
         </h3>
-        <p className="text-xs text-[#a1a1aa] max-w-sm mx-auto mb-6">
+        <p className="text-xs text-[#a1a1aa] max-w-sm mx-auto mb-6 leading-relaxed">
           Mendukung format <strong className="text-white">XLSX, XLS, atau CSV</strong>. Semua kalkulasi dilakukan aman secara private 100% di browser Anda.
         </p>
 
         <button
           onClick={onButtonClick}
-          className="px-4 py-2 bg-white hover:bg-zinc-200 text-black font-semibold rounded-md text-xs transition cursor-pointer flex items-center gap-1.5"
+          className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-xl text-xs transition cursor-pointer flex items-center gap-2 shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:scale-105 active:scale-95"
         >
-          <FileSpreadsheet size={13} />
+          <FileSpreadsheet size={15} />
           <span>Pilih File dari Komputer</span>
         </button>
 
         {dragActive && (
-          <div className="absolute inset-0 w-full h-full rounded-xl bg-blue-500/5 pointer-events-none" />
+          <div className="absolute inset-0 w-full h-full rounded-2xl bg-amber-500/10 pointer-events-none border-2 border-amber-400/80" />
         )}
       </div>
 
       {/* Upload Status / Alerts */}
       {error && (
-        <div className="p-3.5 bg-red-950/20 border border-red-900/30 rounded-lg flex items-start gap-2.5 text-red-200">
-          <AlertCircle className="shrink-0 mt-0.5 text-red-400" size={15} />
+        <div className="p-4 bg-red-950/40 backdrop-blur-xl border border-red-500/30 rounded-xl flex items-start gap-3 text-red-200 shadow-lg">
+          <AlertCircle className="shrink-0 mt-0.5 text-red-400" size={16} />
           <div className="text-xs leading-relaxed">
             <span className="font-semibold text-red-100">Gagal mengunggah:</span> {error}
           </div>
@@ -280,8 +280,8 @@ export default function ExcelUpload({ onUploadSuccess }: ExcelUploadProps) {
       )}
 
       {successMsg && (
-        <div className="p-3.5 bg-[#192b19] border border-[#2e5c2e] rounded-lg flex items-start gap-2.5 text-green-300">
-          <CheckCircle2 className="shrink-0 mt-0.5 text-green-400" size={15} />
+        <div className="p-4 bg-emerald-950/40 backdrop-blur-xl border border-emerald-500/30 rounded-xl flex items-start gap-3 text-emerald-200 shadow-lg">
+          <CheckCircle2 className="shrink-0 mt-0.5 text-emerald-400" size={16} />
           <div className="text-xs leading-relaxed">
             <span className="font-semibold text-white">Berhasil!</span> {successMsg}
           </div>
@@ -289,9 +289,9 @@ export default function ExcelUpload({ onUploadSuccess }: ExcelUploadProps) {
       )}
 
       {/* Sandbox Test Templates Column */}
-      <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-6">
+      <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="text-white animate-pulse" size={14} />
+          <Sparkles className="text-amber-400 animate-pulse" size={16} />
           <h4 className="text-xs font-bold tracking-wider text-white uppercase font-display">
             SIMULASI DATA REKONSILIASI INSTAN
           </h4>
@@ -303,35 +303,35 @@ export default function ExcelUpload({ onUploadSuccess }: ExcelUploadProps) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button
             onClick={() => generateMockTemplate('buang-dana')}
-            className="flex items-center justify-between p-3.5 bg-[#09090b] hover:bg-[#27272a]/20 border border-[#27272a] rounded-lg transition text-left cursor-pointer group"
+            className="flex items-center justify-between p-4 bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-md border border-white/10 hover:border-amber-500/40 rounded-xl transition text-left cursor-pointer group shadow-md"
           >
             <div>
               <div className="text-xs font-semibold text-white group-hover:text-amber-400 transition">1. SC Buang Dana</div>
-              <div className="text-[10px] text-[#52525b]">MANDIRI, NOMINAL, BUKTI...</div>
+              <div className="text-[10px] text-zinc-400 font-mono">MANDIRI, NOMINAL, BUKTI...</div>
             </div>
-            <FileSpreadsheet size={14} className="text-[#a1a1aa] shrink-0" />
+            <FileSpreadsheet size={15} className="text-[#a1a1aa] group-hover:text-amber-400 shrink-0 transition" />
           </button>
 
           <button
             onClick={() => generateMockTemplate('wd-pending')}
-            className="flex items-center justify-between p-3.5 bg-[#09090b] hover:bg-[#27272a]/20 border border-[#27272a] rounded-lg transition text-left cursor-pointer group"
+            className="flex items-center justify-between p-4 bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-md border border-white/10 hover:border-blue-500/40 rounded-xl transition text-left cursor-pointer group shadow-md"
           >
             <div>
               <div className="text-xs font-semibold text-white group-hover:text-blue-400 transition">2. WD Pending</div>
-              <div className="text-[10px] text-[#52525b]">USERNAME, ORDER_ID, NOMINAL</div>
+              <div className="text-[10px] text-zinc-400 font-mono">USERNAME, ORDER_ID, NOMINAL</div>
             </div>
-            <FileSpreadsheet size={14} className="text-[#a1a1aa] shrink-0" />
+            <FileSpreadsheet size={15} className="text-[#a1a1aa] group-hover:text-blue-400 shrink-0 transition" />
           </button>
 
           <button
             onClick={() => generateMockTemplate('order-summary')}
-            className="flex items-center justify-between p-3.5 bg-[#09090b] hover:bg-[#27272a]/20 border border-[#27272a] rounded-lg transition text-left cursor-pointer group"
+            className="flex items-center justify-between p-4 bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-md border border-white/10 hover:border-emerald-500/40 rounded-xl transition text-left cursor-pointer group shadow-md"
           >
             <div>
-              <div className="text-xs font-semibold text-white group-hover:text-green-400 transition">3. Order Summary</div>
-              <div className="text-[10px] text-[#52525b]">TIMESTAMP, STATUS, Rp150K</div>
+              <div className="text-xs font-semibold text-white group-hover:text-emerald-400 transition">3. Order Summary</div>
+              <div className="text-[10px] text-zinc-400 font-mono">TIMESTAMP, STATUS, Rp150K</div>
             </div>
-            <FileSpreadsheet size={14} className="text-[#a1a1aa] shrink-0" />
+            <FileSpreadsheet size={15} className="text-[#a1a1aa] group-hover:text-emerald-400 shrink-0 transition" />
           </button>
         </div>
       </div>

@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import BackgroundCanvas from './BackgroundCanvas';
 import { 
   FileSpreadsheet, 
   Table, 
@@ -140,17 +141,12 @@ export default function DashboardLayout({
 
   return (
     <div 
-      className="h-screen w-full text-[#fafafa] font-sans flex flex-col md:flex-row overflow-hidden border-0 md:border-8 border-amber-500/10 antialiased relative"
-      style={{
-        backgroundImage: `linear-gradient(rgba(10, 10, 12, 0.9), rgba(9, 9, 11, 0.95)), url("https://cdn.areabermain.club/assets/cdn/az9/2026/01/31/20260131/367622c25e169a98cf14404db51cb963/background-web-ligabandot-31-1-2026.jpg")`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      }}
+      className="h-screen w-full text-[#fafafa] font-sans flex flex-col md:flex-row overflow-hidden border-0 md:border-8 border-amber-500/10 antialiased relative bg-black"
     >
+      <BackgroundCanvas />
       
       {/* MOBILE HEADER BAR */}
-      <header className="md:hidden w-full bg-[#0c0c0e]/95 backdrop-blur-md border-b border-amber-500/20 px-4 py-2.5 flex items-center justify-between z-20 shrink-0">
+      <header className="md:hidden w-full bg-black/20 backdrop-blur-2xl border-b border-white/10 px-4 py-2.5 flex items-center justify-between z-20 shrink-0">
         <div className="flex items-center gap-2">
           <img 
             src="https://cdn.areabermain.club/assets/cdn/az1/2025/10/15/20251015/e94bdb4085e68cc3a0f0800de144b38b/ligabandot-logo2-1.png" 
@@ -158,14 +154,14 @@ export default function DashboardLayout({
             className="h-8 object-contain"
             referrerPolicy="no-referrer"
           />
-          <span className="text-[10px] font-sans font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+          <span className="text-[10px] font-sans font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 backdrop-blur-md">
             AUDITOR
           </span>
         </div>
 
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-1.5 text-[#a1a1aa] hover:text-white hover:bg-[#18181b] rounded-lg transition cursor-pointer"
+          className="p-1.5 text-[#a1a1aa] hover:text-white hover:bg-white/10 rounded-lg transition cursor-pointer"
         >
           {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -173,10 +169,10 @@ export default function DashboardLayout({
 
       {/* MOBILE SLIDEOUT DRAWER MENU */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 bg-[#09090b]/98 z-40 md:hidden p-5 flex flex-col justify-between">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-2xl z-40 md:hidden p-5 flex flex-col justify-between">
           <div className="space-y-6">
-            <div className="flex items-center justify-between pb-3 border-b border-[#27272a]">
-              <span className="text-xs font-bold text-[#52525b] font-mono tracking-widest uppercase">NAVIGASI MENU</span>
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <span className="text-xs font-bold text-[#a1a1aa] font-mono tracking-widest uppercase">NAVIGASI MENU</span>
               <button 
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-[#a1a1aa] hover:text-white"
@@ -197,14 +193,14 @@ export default function DashboardLayout({
                     onClick={() => handleNavClick(item.id, item.disabled)}
                     className={`w-full p-3 rounded-lg flex items-center justify-between text-left transition-all ${
                       isActive 
-                        ? 'bg-[#27272a] text-white' 
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 backdrop-blur-md shadow-[0_4px_20px_rgba(245,158,11,0.15)]' 
                         : item.disabled 
                           ? 'opacity-30 cursor-not-allowed text-[#52525b]' 
-                          : 'text-[#a1a1aa] hover:bg-[#18181b]'
+                          : 'text-[#a1a1aa] hover:bg-white/10'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon size={16} className={isActive ? 'text-white' : 'text-[#a1a1aa]'} />
+                      <Icon size={16} className={isActive ? 'text-amber-400' : 'text-[#a1a1aa]'} />
                       <div>
                         <div className="text-xs font-semibold">{item.label}</div>
                         <div className="text-[9px] text-[#71717a]">{item.description}</div>
@@ -213,7 +209,7 @@ export default function DashboardLayout({
 
                     {item.badge && (
                       <span className={`text-[8px] px-1.5 py-0.5 rounded font-bold uppercase ${
-                        isActive ? 'bg-white/10 text-white' : 'bg-zinc-850 text-[#a1a1aa]'
+                        isActive ? 'bg-amber-500/30 text-amber-300' : 'bg-white/10 text-[#a1a1aa]'
                       }`}>
                         {item.badge}
                       </span>
@@ -225,7 +221,7 @@ export default function DashboardLayout({
           </div>
 
           {file && (
-            <div className="p-4 bg-[#18181b] rounded-xl border border-[#27272a] space-y-3">
+            <div className="p-4 bg-white/[0.04] backdrop-blur-xl rounded-xl border border-white/15 space-y-3">
               <div className="text-xs text-[#a1a1aa]">
                 Loaded: <strong className="text-[#fafafa]">{file.name}</strong>
               </div>
@@ -234,7 +230,7 @@ export default function DashboardLayout({
                   onClearFile();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full py-2 bg-red-950/20 border border-red-900/30 text-red-400 hover:text-red-300 rounded-lg text-xs font-semibold cursor-pointer transition text-center"
+                className="w-full py-2 bg-red-950/40 border border-red-500/30 text-red-300 hover:text-red-200 rounded-lg text-xs font-semibold cursor-pointer transition text-center backdrop-blur-md"
               >
                 Reset & Ganti Spreadsheet
               </button>
@@ -244,11 +240,11 @@ export default function DashboardLayout({
       )}
 
       {/* DESKTOP SIDEBAR */}
-      <aside className="hidden md:flex md:w-64 border-r border-[#27272a]/60 bg-[#09090b]/90 backdrop-blur-md flex-col justify-between shrink-0 h-full overflow-y-auto z-10">
+      <aside className="hidden md:flex md:w-64 border-r border-white/10 bg-black/20 backdrop-blur-2xl flex-col justify-between shrink-0 h-full overflow-y-auto z-10 shadow-[8px_0_32px_rgba(0,0,0,0.37)]">
         <div className="p-6">
           
           {/* Logo Brand Header */}
-          <div className="flex flex-col items-center gap-2 mb-6 select-none border-b border-zinc-800/60 pb-5">
+          <div className="flex flex-col items-center gap-2 mb-6 select-none border-b border-white/10 pb-5">
             <img 
               src="https://cdn.areabermain.club/assets/cdn/az1/2025/10/15/20251015/e94bdb4085e68cc3a0f0800de144b38b/ligabandot-logo2-1.png" 
               alt="LIGABANDOT" 
@@ -277,22 +273,22 @@ export default function DashboardLayout({
                     onClick={() => handleNavClick(item.id, item.disabled)}
                     className={`w-full px-3 py-2 rounded-md flex items-center justify-between text-left group transition-all cursor-pointer ${
                       isActive 
-                        ? 'bg-[#27272a] text-white font-medium' 
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium shadow-sm' 
                         : item.disabled 
                           ? 'opacity-25 cursor-not-allowed text-[#52525b]' 
-                          : 'text-[#a1a1aa] hover:text-white hover:bg-[#18181b]'
+                          : 'text-[#a1a1aa] hover:text-white hover:bg-white/5'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon size={14} className={isActive ? 'text-white' : 'text-[#a1a1aa] group-hover:text-white transition-colors'} />
+                      <Icon size={14} className={isActive ? 'text-amber-400' : 'text-[#a1a1aa] group-hover:text-white transition-colors'} />
                       <span className="text-xs">{item.label}</span>
                     </div>
 
                     {item.badge && (
                       <span className={`text-[8px] px-1.5 py-0.5 rounded transition ${
                         isActive 
-                          ? 'bg-zinc-800 text-white' 
-                          : 'bg-zinc-900 text-[#71717a] group-hover:text-[#a1a1aa]'
+                          ? 'bg-amber-500/20 text-amber-300' 
+                          : 'bg-zinc-900/60 text-[#71717a] group-hover:text-[#a1a1aa]'
                       }`}>
                         {item.badge}
                       </span>
@@ -307,7 +303,7 @@ export default function DashboardLayout({
         {/* Desktop Sidebar Bottom Footer Panel */}
         <div className="mt-auto">
           {file && (
-            <div className="m-4 p-4 bg-[#18181b]/50 border border-[#27272a] rounded-xl space-y-2">
+            <div className="m-4 p-4 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl space-y-2">
               <span className="text-[9px] text-[#52525b] font-bold uppercase tracking-wider block">FILE VERIFICATION</span>
               <p className="text-xs text-[#fafafa] font-semibold truncate" title={file.name}>
                 {file.name}
@@ -324,7 +320,7 @@ export default function DashboardLayout({
             </div>
           )}
 
-          <div className="p-4 border-t border-[#27272a] bg-[#0c0c0e]">
+          <div className="p-4 border-t border-white/10 bg-black/30 backdrop-blur-md">
             <div className="text-[10px] text-[#52525b] mb-1.5 uppercase font-bold tracking-wider">ENGINE STATUS</div>
             <div className="flex items-center gap-2 justify-between">
               <div className="flex items-center gap-1.5">
@@ -341,16 +337,16 @@ export default function DashboardLayout({
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-transparent z-10">
         
         {/* Dynamic Nav Header Bar */}
-        <header className="h-16 border-b border-[#27272a]/60 flex items-center justify-between px-8 bg-[#09090b]/80 backdrop-blur-md sticky top-0 z-10 shrink-0">
+        <header className="h-16 border-b border-white/10 flex items-center justify-between px-8 bg-[#09090b]/40 backdrop-blur-xl sticky top-0 z-10 shrink-0">
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-[#71717a]">
-              Pages / {menuItems.find(item => item.id === activeTab)?.label}
+            <span className="text-sm font-medium text-[#a1a1aa]">
+              Pages / <span className="text-white font-semibold">{menuItems.find(item => item.id === activeTab)?.label}</span>
             </span>
           </div>
 
           <div className="hidden sm:flex items-center gap-3">
             {file ? (
-              <span className="text-[10px] font-mono bg-[#18181b] border border-[#27272a] text-[#a1a1aa] px-2.5 py-1 rounded">
+              <span className="text-[10px] font-mono bg-black/40 backdrop-blur-md border border-white/10 text-[#a1a1aa] px-2.5 py-1 rounded">
                 DATASET ACTIVE ({file.rows.length} ROWS)
               </span>
             ) : (
@@ -358,7 +354,7 @@ export default function DashboardLayout({
                 RECONCILIATION COLD (0 ROWS)
               </span>
             )}
-            <span className="text-[10px] font-mono bg-[#1a2e1a] border border-[#2e5c2e] text-green-400 px-2.5 py-1 rounded">
+            <span className="text-[10px] font-mono bg-emerald-950/30 border border-emerald-500/30 text-emerald-400 px-2.5 py-1 rounded">
               100% OFFLINE AUDIT
             </span>
           </div>
@@ -370,7 +366,7 @@ export default function DashboardLayout({
         </section>
 
         {/* Global Footer element */}
-        <footer className="px-8 py-3 border-t border-[#27272a]/60 bg-[#0c0c0e]/60 flex flex-col sm:flex-row sm:items-center justify-between text-[10px] text-[#52525b] gap-2 shrink-0">
+        <footer className="px-8 py-3 border-t border-white/10 bg-black/30 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between text-[10px] text-[#52525b] gap-2 shrink-0">
           <div>
             <span>© 2026 LIGABANDOT Admin Auditor.</span>
             <span className="hidden sm:inline"> Terenkripsi penuh & diproses langsung di memori browser lokal.</span>

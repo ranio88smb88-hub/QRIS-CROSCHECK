@@ -152,7 +152,7 @@ export default function DataTableViewer({ file, onClearFile }: DataTableViewerPr
   return (
     <div className="space-y-4">
       {/* Table File Header Details & Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#18181b] p-5 border border-[#27272a] rounded-xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-black/40 backdrop-blur-md p-5 border border-white/10 rounded-xl shadow-lg">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-[9px] px-2.5 py-0.5 bg-blue-550/10 text-blue-400 font-bold uppercase tracking-wider rounded border border-blue-500/20">
@@ -173,8 +173,8 @@ export default function DataTableViewer({ file, onClearFile }: DataTableViewerPr
             onClick={() => setShowConfig(!showConfig)}
             className={`p-2 rounded-md border text-xs font-semibold cursor-pointer transition flex items-center gap-1.5 ${
               showConfig 
-                ? 'bg-zinc-850 border-zinc-700 text-white' 
-                : 'bg-[#09090b] border-[#27272a] text-[#a1a1aa] hover:text-white'
+                ? 'bg-amber-500/20 border-amber-500/30 text-amber-300' 
+                : 'bg-black/40 border-white/10 text-[#a1a1aa] hover:text-white'
             }`}
             title="Sembunyikan / Tampilkan Kolom"
           >
@@ -204,7 +204,7 @@ export default function DataTableViewer({ file, onClearFile }: DataTableViewerPr
           {/* New Excel Upload Reset */}
           <button
             onClick={onClearFile}
-            className="p-2 px-3 bg-[#241717] hover:bg-[#341b1b] border border-[#4a2222] text-red-400 hover:text-red-350 rounded-md text-xs font-semibold cursor-pointer transition flex items-center gap-1"
+            className="p-2 px-3 bg-red-950/30 hover:bg-red-900/40 border border-red-500/30 text-red-400 hover:text-red-350 rounded-md text-xs font-semibold cursor-pointer transition flex items-center gap-1"
           >
             <X size={12} />
             <span>Ganti File</span>
@@ -214,7 +214,7 @@ export default function DataTableViewer({ file, onClearFile }: DataTableViewerPr
 
       {/* Columns configuration panel */}
       {showConfig && (
-        <div className="p-4 bg-[#18181b] border border-[#27272a] rounded-lg space-y-3">
+        <div className="p-4 bg-black/40 backdrop-blur-md border border-white/10 rounded-lg space-y-3 shadow-lg">
           <div className="flex items-center justify-between">
             <h5 className="text-xs font-bold text-white uppercase tracking-wider font-mono">Pilih Kolom Utama:</h5>
             <button 
@@ -233,8 +233,8 @@ export default function DataTableViewer({ file, onClearFile }: DataTableViewerPr
                   onClick={() => toggleColumnVisibility(col)}
                   className={`text-xs px-2.5 py-1 rounded transition cursor-pointer border ${
                     isVisible 
-                      ? 'bg-zinc-800 border-zinc-700 text-white' 
-                      : 'bg-[#09090b] border-[#27272a] text-[#52525b] hover:text-[#a1a1aa]'
+                      ? 'bg-amber-500/20 border-amber-500/30 text-amber-300' 
+                      : 'bg-black/40 border-white/10 text-[#52525b] hover:text-[#a1a1aa]'
                   }`}
                 >
                   {col}
@@ -258,7 +258,7 @@ export default function DataTableViewer({ file, onClearFile }: DataTableViewerPr
               setGlobalSearch(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full pl-9 pr-4 py-2 bg-[#18181b] border border-[#27272a] rounded-lg text-xs font-sans focus:border-[#52525b] focus:outline-none text-[#fafafa] placeholder-[#52525b]"
+            className="w-full pl-9 pr-4 py-2 bg-black/40 backdrop-blur-md border border-white/10 rounded-lg text-xs font-sans focus:border-[#52525b] focus:outline-none text-[#fafafa] placeholder-[#52525b]"
           />
           {globalSearch && (
             <button
@@ -274,7 +274,7 @@ export default function DataTableViewer({ file, onClearFile }: DataTableViewerPr
         {(Object.keys(columnFilters).length > 0 || sortConfig || globalSearch) && (
           <button
             onClick={resetFilters}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#18181b] hover:bg-[#27272a]/40 border border-[#27272a] text-[#a1a1aa] hover:text-white text-xs font-semibold rounded-lg transition cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 bg-black/40 hover:bg-white/10 border border-white/10 text-[#a1a1aa] hover:text-white text-xs font-semibold rounded-lg transition cursor-pointer backdrop-blur-md"
           >
             <RefreshCw size={11} />
             <span>Reset Filter & Sort</span>
@@ -283,11 +283,11 @@ export default function DataTableViewer({ file, onClearFile }: DataTableViewerPr
       </div>
 
       {/* Interactive Table Stage */}
-      <div className="relative border border-[#27272a] rounded-xl overflow-hidden bg-[#18181b]/20">
+      <div className="relative border border-white/10 rounded-xl overflow-hidden bg-black/40 backdrop-blur-md shadow-xl">
         <div className="w-full overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-max">
             <thead>
-              <tr className="bg-[#18181b] border-b border-[#27272a]">
+              <tr className="bg-black/60 backdrop-blur-md border-b border-white/10">
                 {visibleColumns.map((col) => (
                   <th key={col} className="p-3 text-xs font-semibold text-[#fafafa] align-top">
                     {/* Column Sorter Link */}
@@ -313,17 +313,17 @@ export default function DataTableViewer({ file, onClearFile }: DataTableViewerPr
                         placeholder="Filter..."
                         value={columnFilters[col] ?? ''}
                         onChange={(e) => handleFilterChange(col, e.target.value)}
-                        className="w-full pl-6 pr-2 py-1 bg-[#09090b]/80 border border-[#27272a] rounded text-[10px] focus:outline-none focus:border-[#52525b] text-[#fafafa] placeholder-[#52525b]"
+                        className="w-full pl-6 pr-2 py-1 bg-black/50 border border-white/10 rounded text-[10px] focus:outline-none focus:border-amber-500/30 text-[#fafafa] placeholder-[#52525b]"
                       />
                     </div>
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#27272a]">
+            <tbody className="divide-y divide-white/5">
               {paginatedRows.length > 0 ? (
                 paginatedRows.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-[#18181b]/45 transition">
+                  <tr key={idx} className="hover:bg-white/10 transition">
                     {visibleColumns.map((col) => (
                       <td key={col} className="p-3 text-xs text-[#a1a1aa] align-middle font-mono">
                         {row[col] !== null && row[col] !== undefined ? String(row[col]) : (
@@ -345,7 +345,7 @@ export default function DataTableViewer({ file, onClearFile }: DataTableViewerPr
         </div>
 
         {/* Dynamic Pagination Panel */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-[#18181b] border-t border-[#27272a] text-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-black/50 backdrop-blur-md border-t border-white/10 text-xs">
           <div className="flex items-center gap-1.5 text-[#a1a1aa]">
             <span>Tampilkan</span>
             <select
@@ -354,10 +354,10 @@ export default function DataTableViewer({ file, onClearFile }: DataTableViewerPr
                 setPageSize(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              className="bg-[#09090b] border border-[#27272a] px-2 py-0.5 rounded text-white focus:outline-none"
+              className="bg-black/50 border border-white/10 px-2 py-0.5 rounded text-white focus:outline-none"
             >
               {[10, 25, 50, 100].map(sz => (
-                <option key={sz} value={sz}>{sz}</option>
+                <option key={sz} value={sz} className="bg-zinc-900 text-white">{sz}</option>
               ))}
             </select>
             <span className="text-[11px]">baris per halaman • Menampilkan {processedRows.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, processedRows.length)} dari {processedRows.length} total baris</span>
@@ -367,7 +367,7 @@ export default function DataTableViewer({ file, onClearFile }: DataTableViewerPr
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-1 border border-[#27272a] hover:bg-[#27272a] rounded text-[#fafafa] transition disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+              className="p-1 border border-white/10 hover:bg-white/10 rounded text-[#fafafa] transition disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
             >
               <ChevronLeft size={14} />
             </button>
@@ -377,7 +377,7 @@ export default function DataTableViewer({ file, onClearFile }: DataTableViewerPr
             <button
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="p-1 border border-[#27272a] hover:bg-[#27272a] rounded text-[#fafafa] transition disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+              className="p-1 border border-white/10 hover:bg-white/10 rounded text-[#fafafa] transition disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
             >
               <ChevronRight size={14} />
             </button>

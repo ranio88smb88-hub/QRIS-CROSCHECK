@@ -49,7 +49,8 @@ export default function CroscekTurnover() {
 
   // Config Rules
   const [multiplier, setMultiplier] = useState<number>(3);
-  const [onlyShowAnomali, setOnlyShowAnomali] = useState<boolean>(true);
+  const [minTurnover, setMinTurnover] = useState<number>(100000);
+  const [auditFilterMode, setAuditFilterMode] = useState<'all_flagged' | 'pl_hanti' | 'win_tinggi' | 'all_rows'>('pl_hanti');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   // Copy States
@@ -62,15 +63,16 @@ export default function CroscekTurnover() {
   // Load Demo Data
   const handleLoadDemo = () => {
     const demoData = `Id Pemain\tTotal Bet Turnover\tValid Bet Turnover\tPemain menang/kalah\tKomisi Agent\tAgent Tagihan
+"pl_hanti_user"\t300000\t300000\t500000\t-500000\t0
 "bca222\t"\t65063000\t65063000\t222943000\t-222943000\t0
 "slot_vip77"\t1500000\t1500000\t12000000\t-12000000\t0
-"player_normal"\t100000000\t100000000\t250000000\t-250000000\t0
-"member_gacor"\t20000000\t20000000\t150000000\t-150000000\t0
-"zeus_mania"\t50000000\t50000000\t80000000\t-80000000\t0`;
+"zeus_mania"\t50000000\t50000000\t80000000\t-80000000\t0
+"player_rugi"\t261000\t261000\t1000\t-1000\t0
+"player_kecil"\t50000\t50000\t30000\t-30000\t0`;
     
     setPasteText(demoData);
     processParsedText(demoData);
-    setSuccessMsg('Data contoh berhasil dimuat! Menampilkan user yang memenuhi kriteria Turnover x3 < Pemain Menang.');
+    setSuccessMsg('Data contoh berhasil dimuat! Menampilkan user yang memenuhi kriteria TO (min. 100.000) & Turnover x3.');
     setTimeout(() => setSuccessMsg(null), 3500);
   };
 
@@ -200,62 +202,86 @@ export default function CroscekTurnover() {
     });
   }, [fileData, userIdCol, turnoverCol, winLossCol, komisiCol, tagihanCol]);
 
-  // Main Anomaly Filter: (Turnover * Multiplier) < Pemain Menang
-  // For example: Turnover = 65,063,000 * 3 = 195,189,000 < Pemain Menang (222,943,000) => FLAGGED!
+  // Main Anomaly & Audit Calculation
+  // Kriteria audit hanya memproses user dengan Turnover minimal (misal Rp 100.000)
+  // 1. Indikasi PL Hanti: Pemain Menang < (Turnover * Multiplier) -> Kemenangan tidak mencapai TO x3
+  // 2. Anomali Win Tinggi: (Turnover * Multiplier) < Pemain Menang -> Kemenangan melebihi TO x3
   const processedData = useMemo(() => {
     return parsedRows.map(row => {
       const turnoverToUse = row.validTurnover || row.totalTurnover;
       const calculatedThreshold = turnoverToUse * multiplier;
       const playerWin = row.winLoss;
 
-      // Anomaly trigger: Turnover x Multiplier < Menang
-      const isAnomali = calculatedThreshold < playerWin && playerWin > 0;
-      const selisih = playerWin - calculatedThreshold; // How much player win exceeds (TO * multiplier)
+      // Cek syarat minimal Bet Turnover (misal: min. 100.000)
+      const meetsMinTurnover = turnoverToUse >= minTurnover;
+
+      // Indikasi PL Hanti: Pemain posisi Menang (Pemain Menang >= Valid TO) tetapi Kemenangan < Target TO x Multiplier
+      const isPlHanti = meetsMinTurnover && playerWin >= turnoverToUse && playerWin < calculatedThreshold;
+      const isWinTinggi = meetsMinTurnover && playerWin >= calculatedThreshold && playerWin > 0;
+      const isAnomali = isPlHanti || isWinTinggi;
+      const selisih = Math.abs(playerWin - calculatedThreshold);
+
+      let status: 'PL_HANTI' | 'WIN_TINGGI' | 'NORMAL' = 'NORMAL';
+      if (isPlHanti) status = 'PL_HANTI';
+      else if (isWinTinggi) status = 'WIN_TINGGI';
 
       return {
         ...row,
         turnoverToUse,
         calculatedThreshold,
+        playerWin,
+        meetsMinTurnover,
+        isPlHanti,
+        isWinTinggi,
         isAnomali,
+        status,
         selisih
       };
     });
-  }, [parsedRows, multiplier]);
+  }, [parsedRows, multiplier, minTurnover]);
 
-  // Filtered dataset based on toggle & search
+  // Filtered dataset based on selected audit filter mode & search term
   const filteredRows = useMemo(() => {
     return processedData.filter(row => {
-      if (onlyShowAnomali && !row.isAnomali) return false;
+      if (auditFilterMode === 'all_flagged' && !row.isAnomali) return false;
+      if (auditFilterMode === 'pl_hanti' && !row.isPlHanti) return false;
+      if (auditFilterMode === 'win_tinggi' && !row.isWinTinggi) return false;
+      
       if (searchTerm.trim()) {
         const term = searchTerm.toLowerCase().trim();
         return row.userId.toLowerCase().includes(term);
       }
       return true;
     });
-  }, [processedData, onlyShowAnomali, searchTerm]);
+  }, [processedData, auditFilterMode, searchTerm]);
 
   // Summary Metrics
   const metrics = useMemo(() => {
     const totalScanned = processedData.length;
-    const anomaliRows = processedData.filter(r => r.isAnomali);
-    const totalAnomaliCount = anomaliRows.length;
-    const totalAnomaliTurnover = anomaliRows.reduce((acc, r) => acc + r.turnoverToUse, 0);
-    const totalAnomaliWin = anomaliRows.reduce((acc, r) => acc + r.winLoss, 0);
-    const totalSelisih = anomaliRows.reduce((acc, r) => acc + r.selisih, 0);
+    const plHantiRows = processedData.filter(r => r.isPlHanti);
+    const winTinggiRows = processedData.filter(r => r.isWinTinggi);
+    const flaggedRows = processedData.filter(r => r.isAnomali);
+
+    const totalPlHantiCount = plHantiRows.length;
+    const totalWinTinggiCount = winTinggiRows.length;
+    const totalFlaggedCount = flaggedRows.length;
+
+    const totalPlHantiWin = plHantiRows.reduce((acc, r) => acc + r.playerWin, 0);
+    const totalWinTinggiWin = winTinggiRows.reduce((acc, r) => acc + r.playerWin, 0);
 
     return {
       totalScanned,
-      totalAnomaliCount,
-      totalAnomaliTurnover,
-      totalAnomaliWin,
-      totalSelisih
+      totalPlHantiCount,
+      totalWinTinggiCount,
+      totalFlaggedCount,
+      totalPlHantiWin,
+      totalWinTinggiWin
     };
   }, [processedData]);
 
   // Copy User IDs (Line by Line)
   const handleCopyUserIdsLine = () => {
-    const targetRows = onlyShowAnomali ? processedData.filter(r => r.isAnomali) : processedData;
-    const list = targetRows.map(r => r.userId).filter(Boolean).join('\n');
+    const list = filteredRows.map(r => r.userId).filter(Boolean).join('\n');
     if (!list) return;
     navigator.clipboard.writeText(list);
     setCopiedType('userIdLine');
@@ -264,8 +290,7 @@ export default function CroscekTurnover() {
 
   // Copy User IDs (Comma Separated)
   const handleCopyUserIdsComma = () => {
-    const targetRows = onlyShowAnomali ? processedData.filter(r => r.isAnomali) : processedData;
-    const list = targetRows.map(r => r.userId).filter(Boolean).join(', ');
+    const list = filteredRows.map(r => r.userId).filter(Boolean).join(', ');
     if (!list) return;
     navigator.clipboard.writeText(list);
     setCopiedType('userIdComma');
@@ -274,24 +299,33 @@ export default function CroscekTurnover() {
 
   // Copy Formatted Report for Admin / WhatsApp
   const handleCopyReport = () => {
-    const targetRows = processedData.filter(r => r.isAnomali);
+    const targetRows = auditFilterMode === 'all_rows' ? processedData.filter(r => r.isAnomali) : filteredRows;
     if (targetRows.length === 0) return;
 
-    let reportText = `🚨 *LAPORAN CROSCEK ANOMALI TURNOVER VS MENANG (x${multiplier})*\n`;
+    let reportText = `🚨 *LAPORAN AUDIT CROSCEK TURNOVER VS MENANG (x${multiplier})*\n`;
     reportText += `Tanggal Audit: ${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}\n`;
-    reportText += `Total User Terindikasi: ${targetRows.length} User\n`;
+    reportText += `Total User Terdeteksi: ${targetRows.length} User\n`;
     reportText += `------------------------------------------\n\n`;
 
     targetRows.forEach((r, idx) => {
+      const statusLabel = r.isPlHanti 
+        ? '🔴 Indikasi PL Hanti (Menang < TOx' + multiplier + ')' 
+        : r.isWinTinggi 
+        ? '🟡 Anomali Win Tinggi (TOx' + multiplier + ' < Menang)' 
+        : '⚪ Normal';
+
       reportText += `#${idx + 1} User: *${r.userId}*\n`;
+      reportText += `• Status: ${statusLabel}\n`;
       reportText += `• Valid Turnover: Rp ${formatThousands(r.turnoverToUse)}\n`;
-      reportText += `• TO x${multiplier}: Rp ${formatThousands(r.calculatedThreshold)}\n`;
-      reportText += `• Pemain Menang: Rp ${formatThousands(r.winLoss)}\n`;
-      reportText += `• Selisih (Menang - TOx${multiplier}): Rp ${formatThousands(r.selisih)}\n\n`;
+      reportText += `• Target TO x${multiplier}: Rp ${formatThousands(r.calculatedThreshold)}\n`;
+      reportText += `• Pemain Menang: Rp ${formatThousands(r.playerWin)}\n`;
+      reportText += `• Selisih Nominal: Rp ${formatThousands(r.selisih)}\n\n`;
     });
 
     reportText += `------------------------------------------\n`;
-    reportText += `*Total Kemenangan Anomali:* Rp ${formatThousands(metrics.totalAnomaliWin)}\n`;
+    reportText += `*Ringkasan Laporan:*\n`;
+    reportText += `• Total Indikasi PL Hanti: ${metrics.totalPlHantiCount} User (Rp ${formatThousands(metrics.totalPlHantiWin)})\n`;
+    reportText += `• Total Win Tinggi (>TOx${multiplier}): ${metrics.totalWinTinggiCount} User (Rp ${formatThousands(metrics.totalWinTinggiWin)})\n`;
 
     navigator.clipboard.writeText(reportText);
     setCopiedType('reportText');
@@ -300,7 +334,7 @@ export default function CroscekTurnover() {
 
   // Export Filtered Result to Excel (.xlsx)
   const handleExportExcel = () => {
-    const targetRows = onlyShowAnomali ? processedData.filter(r => r.isAnomali) : processedData;
+    const targetRows = auditFilterMode === 'all_rows' ? processedData : filteredRows;
     if (targetRows.length === 0) return;
 
     const excelData = targetRows.map((r, idx) => ({
@@ -308,17 +342,21 @@ export default function CroscekTurnover() {
       'Id Pemain': r.userId,
       'Valid Bet Turnover': r.turnoverToUse,
       [`Turnover x${multiplier}`]: r.calculatedThreshold,
-      'Pemain Menang/Kalah': r.winLoss,
-      'Selisih (Menang - TO x Multiplier)': r.selisih,
+      'Pemain Menang/Kalah': r.playerWin,
+      'Selisih Nominal': r.selisih,
       'Komisi Agent': r.komisiAgent,
       'Agent Tagihan': r.agentTagihan,
-      'Status Audit': r.isAnomali ? `ANOMALI (TO x${multiplier} < Menang)` : 'NORMAL'
+      'Kategori Status': r.isPlHanti 
+        ? `Indikasi PL Hanti (Menang < TO x${multiplier})` 
+        : r.isWinTinggi 
+        ? `Anomali Win Tinggi (TO x${multiplier} < Menang)` 
+        : 'Normal'
     }));
 
     const ws = XLSX.utils.json_to_sheet(excelData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Anomali Turnover');
-    XLSX.writeFile(wb, `Audit_Turnover_vs_Menang_x${multiplier}_${Date.now()}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, 'Audit Turnover');
+    XLSX.writeFile(wb, `Audit_Turnover_PL_Hanti_x${multiplier}_${Date.now()}.xlsx`);
   };
 
   const handleReset = () => {
@@ -334,7 +372,7 @@ export default function CroscekTurnover() {
     <div className="space-y-6">
       
       {/* Top Banner & Quick Controls */}
-      <div className="bg-[#18181b]/70 backdrop-blur-md border border-amber-500/20 p-6 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-black/40 backdrop-blur-md border border-amber-500/30 p-6 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Sparkles className="text-amber-500 animate-pulse" size={18} />
@@ -343,7 +381,7 @@ export default function CroscekTurnover() {
             </h2>
           </div>
           <p className="text-xs text-[#a1a1aa] leading-relaxed">
-            Filter otomatis user dengan <span className="text-amber-400 font-mono font-semibold">Turnover x {multiplier} &lt; Pemain Menang</span> untuk mendeteksi rasio kemenangan yang tidak wajar.
+            Mendeteksi <span className="text-rose-400 font-mono font-semibold">Indikasi PL Hanti</span> (Kemenangan &lt; TO x{multiplier}) dan <span className="text-amber-400 font-mono font-semibold">Anomali Win Tinggi</span> untuk user dengan Bet Turnover &ge; Rp {formatThousands(minTurnover)}.
           </p>
         </div>
 
@@ -369,14 +407,14 @@ export default function CroscekTurnover() {
 
       {/* Messages */}
       {errorMsg && (
-        <div className="p-4 bg-rose-950/40 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-center gap-2">
+        <div className="p-4 bg-rose-950/40 backdrop-blur-md border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-center gap-2">
           <AlertTriangle size={16} className="text-rose-400 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-xs text-emerald-300 flex items-center gap-2">
+        <div className="p-4 bg-emerald-950/40 backdrop-blur-md border border-emerald-500/30 rounded-xl text-xs text-emerald-300 flex items-center gap-2">
           <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
           <span>{successMsg}</span>
         </div>
@@ -389,7 +427,7 @@ export default function CroscekTurnover() {
         <div className="col-span-1 lg:col-span-5 space-y-5">
           
           {/* File Upload & Paste Tab Header */}
-          <div className="bg-[#18181b]/70 backdrop-blur-md border border-[#27272a] rounded-xl p-5 space-y-4">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-5 space-y-4 shadow-lg">
             <span className="text-[10px] font-bold text-white font-mono tracking-widest uppercase flex items-center gap-1.5">
               <FileSpreadsheet size={14} className="text-amber-500" />
               1. Import File Excel atau Paste Data
@@ -398,7 +436,7 @@ export default function CroscekTurnover() {
             {/* Drag & Drop Upload Zone */}
             <div 
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-zinc-800 hover:border-amber-500/50 bg-[#09090b]/80 p-5 rounded-xl text-center cursor-pointer transition group space-y-2"
+              className="border-2 border-dashed border-white/10 hover:border-amber-500/50 bg-black/30 hover:bg-black/50 p-5 rounded-xl text-center cursor-pointer transition group space-y-2 backdrop-blur-sm"
             >
               <input
                 ref={fileInputRef}
@@ -417,9 +455,9 @@ export default function CroscekTurnover() {
             </div>
 
             <div className="relative flex items-center py-1">
-              <div className="grow border-t border-zinc-800"></div>
-              <span className="shrink mx-2 text-[10px] font-mono uppercase text-zinc-600">ATAU PASTE TABEL</span>
-              <div className="grow border-t border-zinc-800"></div>
+              <div className="grow border-t border-white/10"></div>
+              <span className="shrink mx-2 text-[10px] font-mono uppercase text-zinc-500">ATAU PASTE TABEL</span>
+              <div className="grow border-t border-white/10"></div>
             </div>
 
             {/* Direct Paste Area */}
@@ -427,20 +465,20 @@ export default function CroscekTurnover() {
               value={pasteText}
               onChange={handlePasteChange}
               placeholder="Paste baris data dari Excel di sini...&#10;Contoh:&#10;Id Pemain	Total Bet Turnover	Valid Bet Turnover	Pemain menang/kalah&#10;bca222	65063000	65063000	222943000"
-              className="w-full h-36 bg-[#09090b] border border-[#27272a] text-white p-3 rounded-lg focus:outline-none focus:border-amber-500/50 text-xs font-mono leading-relaxed"
+              className="w-full h-36 bg-black/30 border border-white/10 text-white p-3 rounded-lg focus:outline-none focus:border-amber-500/50 text-xs font-mono leading-relaxed backdrop-blur-sm"
             />
           </div>
 
           {/* Configuration & Column Mapping Panel */}
           {fileData && (
-            <div className="bg-[#18181b]/70 backdrop-blur-md border border-[#27272a] rounded-xl p-5 space-y-4">
+            <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-5 space-y-4 shadow-lg">
               <span className="text-[10px] font-bold text-white font-mono tracking-widest uppercase flex items-center gap-1.5">
                 <Filter size={14} className="text-amber-500" />
                 2. Pemetaan Kolom & Paramater Filter
               </span>
 
               {/* Multiplier Configuration */}
-              <div className="p-3 bg-amber-500/5 rounded-lg border border-amber-500/15 space-y-2">
+              <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/20 space-y-2 backdrop-blur-sm">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-amber-400 font-mono uppercase">
                     Faktor Kelipatan (Multiplier)
@@ -457,7 +495,7 @@ export default function CroscekTurnover() {
                       className={`flex-1 py-1 rounded text-xs font-mono font-bold transition ${
                         multiplier === val
                           ? 'bg-amber-500 text-black shadow-sm'
-                          : 'bg-[#09090b] text-zinc-400 border border-zinc-800 hover:text-white'
+                          : 'bg-black/40 text-zinc-400 border border-white/10 hover:text-white'
                       }`}
                     >
                       x{val}
@@ -465,7 +503,37 @@ export default function CroscekTurnover() {
                   ))}
                 </div>
                 <p className="text-[10px] text-zinc-400 leading-tight">
-                  Sistem mendeteksi user jika: <span className="text-amber-300 font-mono font-semibold">(Turnover x {multiplier}) &lt; Pemain Menang</span>.
+                  Kriteria target: <span className="text-amber-300 font-mono font-semibold">(Turnover x {multiplier})</span>.
+                </p>
+              </div>
+
+              {/* Minimal Bet Turnover Configuration */}
+              <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/20 space-y-2 backdrop-blur-sm">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-amber-400 font-mono uppercase">
+                    Minimal Bet Turnover
+                  </label>
+                  <span className="text-xs font-mono font-bold text-white bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">
+                    {minTurnover === 0 ? 'Semua TO' : `Min. Rp ${formatThousands(minTurnover)}`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {[0, 50000, 100000, 250000, 500000].map(val => (
+                    <button
+                      key={val}
+                      onClick={() => setMinTurnover(val)}
+                      className={`flex-1 py-1 rounded text-[11px] font-mono font-bold transition ${
+                        minTurnover === val
+                          ? 'bg-amber-500 text-black shadow-sm'
+                          : 'bg-black/40 text-zinc-400 border border-white/10 hover:text-white'
+                      }`}
+                    >
+                      {val === 0 ? 'Semua' : `${val / 1000}k`}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-zinc-400 leading-tight">
+                  Hanya mengaudit user dengan Bet Turnover <span className="text-amber-300 font-mono font-semibold">&ge; Rp {formatThousands(minTurnover)}</span>.
                 </p>
               </div>
 
@@ -476,10 +544,10 @@ export default function CroscekTurnover() {
                   <select
                     value={userIdCol}
                     onChange={(e) => setUserIdCol(e.target.value)}
-                    className="w-full bg-[#09090b] border border-[#27272a] text-white px-2.5 py-1.5 rounded text-xs focus:outline-none focus:border-amber-500/30"
+                    className="w-full bg-black/40 border border-white/10 text-white px-2.5 py-1.5 rounded text-xs focus:outline-none focus:border-amber-500/30 backdrop-blur-sm"
                   >
                     {fileData.headers.map(h => (
-                      <option key={h} value={h}>{h}</option>
+                      <option key={h} value={h} className="bg-zinc-900 text-white">{h}</option>
                     ))}
                   </select>
                 </div>
@@ -489,10 +557,10 @@ export default function CroscekTurnover() {
                   <select
                     value={turnoverCol}
                     onChange={(e) => setTurnoverCol(e.target.value)}
-                    className="w-full bg-[#09090b] border border-[#27272a] text-white px-2.5 py-1.5 rounded text-xs focus:outline-none focus:border-amber-500/30"
+                    className="w-full bg-black/40 border border-white/10 text-white px-2.5 py-1.5 rounded text-xs focus:outline-none focus:border-amber-500/30 backdrop-blur-sm"
                   >
                     {fileData.headers.map(h => (
-                      <option key={h} value={h}>{h}</option>
+                      <option key={h} value={h} className="bg-zinc-900 text-white">{h}</option>
                     ))}
                   </select>
                 </div>
@@ -502,10 +570,10 @@ export default function CroscekTurnover() {
                   <select
                     value={winLossCol}
                     onChange={(e) => setWinLossCol(e.target.value)}
-                    className="w-full bg-[#09090b] border border-[#27272a] text-white px-2.5 py-1.5 rounded text-xs focus:outline-none focus:border-amber-500/30"
+                    className="w-full bg-black/40 border border-white/10 text-white px-2.5 py-1.5 rounded text-xs focus:outline-none focus:border-amber-500/30 backdrop-blur-sm"
                   >
                     {fileData.headers.map(h => (
-                      <option key={h} value={h}>{h}</option>
+                      <option key={h} value={h} className="bg-zinc-900 text-white">{h}</option>
                     ))}
                   </select>
                 </div>
@@ -522,41 +590,74 @@ export default function CroscekTurnover() {
           {/* Summary Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             
-            <div className="bg-[#18181b]/70 backdrop-blur-md border border-[#27272a] p-3.5 rounded-xl space-y-1">
-              <div className="text-[10px] font-bold text-zinc-500 font-mono uppercase tracking-wider">Total Scanned</div>
+            <div className="bg-black/40 backdrop-blur-md border border-white/10 p-3.5 rounded-xl space-y-1 shadow-lg">
+              <div className="text-[10px] font-bold text-zinc-400 font-mono uppercase tracking-wider">Total Scanned</div>
               <div className="text-lg font-bold text-white font-mono">
                 {metrics.totalScanned} <span className="text-xs text-zinc-500 font-normal">User</span>
               </div>
             </div>
 
-            <div className="bg-[#18181b]/70 backdrop-blur-md border border-amber-500/30 p-3.5 rounded-xl space-y-1 bg-amber-500/5">
-              <div className="text-[10px] font-bold text-amber-500 font-mono uppercase tracking-wider flex items-center gap-1">
+            <div 
+              onClick={() => setAuditFilterMode('pl_hanti')}
+              className={`p-3.5 rounded-xl space-y-1 border cursor-pointer transition backdrop-blur-md shadow-lg ${
+                auditFilterMode === 'pl_hanti' 
+                  ? 'bg-rose-500/20 border-rose-500/60 ring-1 ring-rose-500/40' 
+                  : 'bg-black/40 border-rose-500/30 hover:bg-rose-500/15'
+              }`}
+            >
+              <div className="text-[10px] font-bold text-rose-400 font-mono uppercase tracking-wider flex items-center gap-1">
                 <AlertTriangle size={10} />
-                User Terindikasi
+                Indikasi PL Hanti
               </div>
-              <div className="text-lg font-bold text-amber-400 font-mono">
-                {metrics.totalAnomaliCount} <span className="text-xs text-amber-500/70 font-normal">Anomali</span>
+              <div className="text-lg font-bold text-rose-300 font-mono">
+                {metrics.totalPlHantiCount} <span className="text-xs text-rose-400/70 font-normal">User</span>
               </div>
-            </div>
-
-            <div className="bg-[#18181b]/70 backdrop-blur-md border border-[#27272a] p-3.5 rounded-xl space-y-1">
-              <div className="text-[10px] font-bold text-zinc-500 font-mono uppercase tracking-wider">Total TO Anomali</div>
-              <div className="text-xs font-bold text-white font-mono truncate" title={`Rp ${formatThousands(metrics.totalAnomaliTurnover)}`}>
-                Rp {formatThousands(metrics.totalAnomaliTurnover)}
+              <div className="text-[10px] font-mono text-rose-400/80 truncate">
+                Menang &lt; TO x{multiplier}
               </div>
             </div>
 
-            <div className="bg-[#18181b]/70 backdrop-blur-md border border-[#27272a] p-3.5 rounded-xl space-y-1">
-              <div className="text-[10px] font-bold text-emerald-400 font-mono uppercase tracking-wider">Total Menang Anomali</div>
-              <div className="text-xs font-bold text-emerald-400 font-mono truncate" title={`Rp ${formatThousands(metrics.totalAnomaliWin)}`}>
-                Rp {formatThousands(metrics.totalAnomaliWin)}
+            <div 
+              onClick={() => setAuditFilterMode('win_tinggi')}
+              className={`p-3.5 rounded-xl space-y-1 border cursor-pointer transition backdrop-blur-md shadow-lg ${
+                auditFilterMode === 'win_tinggi' 
+                  ? 'bg-amber-500/20 border-amber-500/60 ring-1 ring-amber-500/40' 
+                  : 'bg-black/40 border-amber-500/30 hover:bg-amber-500/15'
+              }`}
+            >
+              <div className="text-[10px] font-bold text-amber-400 font-mono uppercase tracking-wider flex items-center gap-1">
+                <Sparkles size={10} />
+                Win Tinggi
+              </div>
+              <div className="text-lg font-bold text-amber-300 font-mono">
+                {metrics.totalWinTinggiCount} <span className="text-xs text-amber-400/70 font-normal">User</span>
+              </div>
+              <div className="text-[10px] font-mono text-amber-400/80 truncate">
+                TO x{multiplier} &lt; Menang
+              </div>
+            </div>
+
+            <div 
+              onClick={() => setAuditFilterMode('all_flagged')}
+              className={`p-3.5 rounded-xl space-y-1 border cursor-pointer transition backdrop-blur-md shadow-lg ${
+                auditFilterMode === 'all_flagged' 
+                  ? 'bg-amber-500/20 border-amber-500/60 ring-1 ring-amber-500/40' 
+                  : 'bg-black/40 border-white/10 hover:bg-white/5'
+              }`}
+            >
+              <div className="text-[10px] font-bold text-zinc-400 font-mono uppercase tracking-wider">Total Terdeteksi</div>
+              <div className="text-lg font-bold text-white font-mono">
+                {metrics.totalFlaggedCount} <span className="text-xs text-zinc-500 font-normal">Anomali</span>
+              </div>
+              <div className="text-[10px] font-mono text-zinc-500 truncate">
+                Gabungan Audit
               </div>
             </div>
 
           </div>
 
           {/* Action Toolbar */}
-          <div className="bg-[#18181b]/70 backdrop-blur-md border border-[#27272a] p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 p-4 rounded-xl flex flex-col xl:flex-row xl:items-center justify-between gap-3 shadow-lg">
             
             {/* Search Input */}
             <div className="relative grow max-w-xs">
@@ -566,31 +667,65 @@ export default function CroscekTurnover() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Cari ID Pemain..."
-                className="w-full bg-[#09090b] border border-[#27272a] text-white pl-8 pr-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-amber-500/40"
+                className="w-full bg-black/40 border border-white/10 text-white pl-8 pr-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-amber-500/40 backdrop-blur-sm"
               />
             </div>
 
-            {/* Filter Toggle Switch */}
-            <div className="flex items-center gap-2">
+            {/* Filter Toggle Buttons */}
+            <div className="flex items-center gap-1.5 flex-wrap">
               <button
-                onClick={() => setOnlyShowAnomali(!onlyShowAnomali)}
-                className={`px-3 py-1.5 rounded text-xs font-semibold font-mono tracking-wider transition flex items-center gap-1.5 cursor-pointer ${
-                  onlyShowAnomali
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                    : 'bg-[#09090b] text-zinc-400 border border-zinc-800'
+                onClick={() => setAuditFilterMode('pl_hanti')}
+                className={`px-2.5 py-1.5 rounded text-xs font-semibold font-mono tracking-wider transition flex items-center gap-1 cursor-pointer ${
+                  auditFilterMode === 'pl_hanti'
+                    ? 'bg-rose-500/25 text-rose-300 border border-rose-500/50'
+                    : 'bg-black/40 text-zinc-400 border border-white/10 hover:text-white'
                 }`}
               >
-                <Filter size={12} />
-                {onlyShowAnomali ? 'Hanya Anomali' : 'Semua Data'}
+                <AlertTriangle size={12} className="text-rose-400" />
+                Indikasi PL Hanti
+              </button>
+
+              <button
+                onClick={() => setAuditFilterMode('win_tinggi')}
+                className={`px-2.5 py-1.5 rounded text-xs font-semibold font-mono tracking-wider transition flex items-center gap-1 cursor-pointer ${
+                  auditFilterMode === 'win_tinggi'
+                    ? 'bg-amber-500/25 text-amber-300 border border-amber-500/50'
+                    : 'bg-black/40 text-zinc-400 border border-white/10 hover:text-white'
+                }`}
+              >
+                <Filter size={12} className="text-amber-400" />
+                Win Tinggi (&gt;TOx{multiplier})
+              </button>
+
+              <button
+                onClick={() => setAuditFilterMode('all_flagged')}
+                className={`px-2.5 py-1.5 rounded text-xs font-semibold font-mono tracking-wider transition flex items-center gap-1 cursor-pointer ${
+                  auditFilterMode === 'all_flagged'
+                    ? 'bg-amber-500/25 text-amber-400 border border-amber-500/50'
+                    : 'bg-black/40 text-zinc-400 border border-white/10 hover:text-white'
+                }`}
+              >
+                Semua Terindikasi
+              </button>
+
+              <button
+                onClick={() => setAuditFilterMode('all_rows')}
+                className={`px-2.5 py-1.5 rounded text-xs font-semibold font-mono tracking-wider transition flex items-center gap-1 cursor-pointer ${
+                  auditFilterMode === 'all_rows'
+                    ? 'bg-white/20 text-white border border-white/30'
+                    : 'bg-black/40 text-zinc-500 border border-white/10 hover:text-white'
+                }`}
+              >
+                Semua Data
               </button>
             </div>
 
-            {/* Copy & Export Dropdown Actions */}
+            {/* Copy & Export Actions */}
             <div className="flex items-center gap-1.5 flex-wrap">
               <button
                 onClick={handleCopyUserIdsLine}
                 disabled={filteredRows.length === 0}
-                className="px-2.5 py-1.5 bg-[#09090b] hover:bg-zinc-800 text-zinc-300 rounded border border-zinc-800 text-xs font-mono transition flex items-center gap-1"
+                className="px-2 py-1.5 bg-black/40 hover:bg-white/10 text-zinc-300 rounded border border-white/10 text-xs font-mono transition flex items-center gap-1"
                 title="Salin list ID Pemain per baris"
               >
                 {copiedType === 'userIdLine' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
@@ -600,7 +735,7 @@ export default function CroscekTurnover() {
               <button
                 onClick={handleCopyUserIdsComma}
                 disabled={filteredRows.length === 0}
-                className="px-2.5 py-1.5 bg-[#09090b] hover:bg-zinc-800 text-zinc-300 rounded border border-zinc-800 text-xs font-mono transition flex items-center gap-1"
+                className="px-2 py-1.5 bg-black/40 hover:bg-white/10 text-zinc-300 rounded border border-white/10 text-xs font-mono transition flex items-center gap-1"
                 title="Salin list ID Pemain dipisah koma"
               >
                 {copiedType === 'userIdComma' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
@@ -609,8 +744,8 @@ export default function CroscekTurnover() {
 
               <button
                 onClick={handleCopyReport}
-                disabled={metrics.totalAnomaliCount === 0}
-                className="px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded border border-amber-500/30 text-xs font-mono transition flex items-center gap-1"
+                disabled={filteredRows.length === 0}
+                className="px-2 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded border border-amber-500/30 text-xs font-mono transition flex items-center gap-1"
                 title="Salin ringkasan laporan ke WhatsApp"
               >
                 {copiedType === 'reportText' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
@@ -620,7 +755,7 @@ export default function CroscekTurnover() {
               <button
                 onClick={handleExportExcel}
                 disabled={filteredRows.length === 0}
-                className="px-2.5 py-1.5 bg-emerald-950/30 hover:bg-emerald-900/40 text-emerald-400 rounded border border-emerald-500/30 text-xs font-mono transition flex items-center gap-1"
+                className="px-2 py-1.5 bg-emerald-950/30 hover:bg-emerald-900/40 text-emerald-400 rounded border border-emerald-500/30 text-xs font-mono transition flex items-center gap-1"
                 title="Download Excel"
               >
                 <Download size={12} />
@@ -631,21 +766,21 @@ export default function CroscekTurnover() {
           </div>
 
           {/* Results Table */}
-          <div className="bg-[#18181b]/70 backdrop-blur-md border border-[#27272a] rounded-xl overflow-hidden">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto max-h-[520px]">
               <table className="w-full text-left border-collapse">
-                <thead className="bg-[#09090b] text-[10px] font-mono text-zinc-400 uppercase sticky top-0 z-10 border-b border-[#27272a]">
+                <thead className="bg-black/60 backdrop-blur-md text-[10px] font-mono text-zinc-300 uppercase sticky top-0 z-10 border-b border-white/10">
                   <tr>
                     <th className="py-3 px-3 w-10 text-center">No</th>
                     <th className="py-3 px-3">Id Pemain</th>
                     <th className="py-3 px-3 text-right">Valid Turnover</th>
-                    <th className="py-3 px-3 text-right bg-amber-500/5 text-amber-400">Turnover x{multiplier}</th>
+                    <th className="py-3 px-3 text-right bg-amber-500/10 text-amber-400">Target TO x{multiplier}</th>
                     <th className="py-3 px-3 text-right text-emerald-400">Pemain Menang</th>
                     <th className="py-3 px-3 text-right">Selisih</th>
-                    <th className="py-3 px-3 text-center">Status</th>
+                    <th className="py-3 px-3 text-center">Status Audit</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#27272a]/50 text-xs font-mono">
+                <tbody className="divide-y divide-white/5 text-xs font-mono">
                   {filteredRows.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="py-12 text-center text-zinc-500">
@@ -656,13 +791,17 @@ export default function CroscekTurnover() {
                     filteredRows.map((row, idx) => (
                       <tr 
                         key={row.id}
-                        className={`hover:bg-zinc-800/40 transition ${
-                          row.isAnomali ? 'bg-amber-500/5 hover:bg-amber-500/10' : ''
+                        className={`hover:bg-white/10 transition ${
+                          row.isPlHanti 
+                            ? 'bg-rose-500/10 hover:bg-rose-500/20' 
+                            : row.isWinTinggi 
+                            ? 'bg-amber-500/10 hover:bg-amber-500/20' 
+                            : ''
                         }`}
                       >
                         <td className="py-2.5 px-3 text-center text-zinc-500 text-[11px]">{idx + 1}</td>
                         <td className="py-2.5 px-3 font-semibold text-white">
-                          <span className="bg-[#09090b] px-2 py-0.5 rounded border border-zinc-800 text-amber-300">
+                          <span className="bg-black/50 px-2 py-0.5 rounded border border-white/10 text-amber-300">
                             {row.userId || '-'}
                           </span>
                         </td>
@@ -673,19 +812,24 @@ export default function CroscekTurnover() {
                           {formatThousands(row.calculatedThreshold)}
                         </td>
                         <td className="py-2.5 px-3 text-right font-bold text-emerald-400">
-                          {formatThousands(row.winLoss)}
+                          {formatThousands(row.playerWin)}
                         </td>
                         <td className="py-2.5 px-3 text-right text-zinc-400 text-[11px]">
-                          +{formatThousands(row.selisih)}
+                          Rp {formatThousands(row.selisih)}
                         </td>
                         <td className="py-2.5 px-3 text-center">
-                          {row.isAnomali ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                              <AlertTriangle size={10} />
+                          {row.isPlHanti ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/25 text-rose-300 border border-rose-500/40">
+                              <AlertTriangle size={10} className="text-rose-400" />
+                              Indikasi PL Hanti
+                            </span>
+                          ) : row.isWinTinggi ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/25 text-amber-300 border border-amber-500/40">
+                              <Sparkles size={10} />
                               TO x{multiplier} &lt; Menang
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-800 text-zinc-400">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-zinc-400">
                               Normal
                             </span>
                           )}
@@ -699,7 +843,7 @@ export default function CroscekTurnover() {
 
             {/* Footer Summary Bar */}
             {filteredRows.length > 0 && (
-              <div className="bg-[#09090b] p-3 border-t border-[#27272a] flex items-center justify-between text-[11px] font-mono text-zinc-400">
+              <div className="bg-black/50 backdrop-blur-md p-3 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-zinc-400">
                 <span>Menampilkan {filteredRows.length} dari {processedData.length} User</span>
                 <span>Audit Multiplier: TO x {multiplier}</span>
               </div>
