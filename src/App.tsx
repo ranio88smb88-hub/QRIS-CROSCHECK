@@ -18,6 +18,7 @@ import Instructions from './components/Instructions';
 import QrisCrossCheck from './components/QrisCrossCheck';
 import NaikSaldoQris from './components/NaikSaldoQris';
 import PeminjamanDana from './components/PeminjamanDana';
+import CroscekTurnover from './components/CroscekTurnover';
 import { UploadedFile, ActiveTab } from './types';
 
 export default function App() {
@@ -214,6 +215,12 @@ export default function App() {
           {activeTab === 'peminjaman-dana' && (
             <div className="space-y-6">
               <PeminjamanDana />
+            </div>
+          )}
+
+          {activeTab === 'croscek-turnover' && (
+            <div className="space-y-6">
+              <CroscekTurnover />
             </div>
           )}
 

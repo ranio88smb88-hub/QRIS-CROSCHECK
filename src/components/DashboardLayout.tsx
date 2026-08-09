@@ -20,7 +20,8 @@ import {
   TrendingUp,
   CloudLightning,
   MonitorCheck,
-  DollarSign
+  DollarSign,
+  ShieldAlert
 } from 'lucide-react';
 import { UploadedFile, ActiveTab } from '../types';
 
@@ -119,6 +120,14 @@ export default function DashboardLayout({
       icon: DollarSign, 
       badge: 'Baru',
       description: 'Format rekon peminjaman dana',
+      disabled: false
+    },
+    { 
+      id: 'croscek-turnover' as ActiveTab, 
+      label: 'Croscek Turnover vs Menang', 
+      icon: ShieldAlert, 
+      badge: 'Audit',
+      description: 'Filter Turnover x3 < Menang',
       disabled: false
     },
   ];

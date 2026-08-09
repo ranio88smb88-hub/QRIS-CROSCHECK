@@ -4,6 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Excel Cross-Check & Report Formatter</title>
+    <script>
+      (function() {
+        try {
+          var origFetch = window.fetch;
+          Object.defineProperty(window, 'fetch', {
+            configurable: true,
+            enumerable: true,
+            get: function() {
+              return origFetch;
+            },
+            set: function(val) {
+              origFetch = val;
+            }
+          });
+        } catch (e) {}
+      })();
+    </script>
     <!-- Google Fonts Inter, Space Grotesk, and JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
