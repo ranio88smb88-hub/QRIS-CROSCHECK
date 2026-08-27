@@ -22,7 +22,8 @@ import {
   CloudLightning,
   MonitorCheck,
   DollarSign,
-  ShieldAlert
+  ShieldAlert,
+  Flame
 } from 'lucide-react';
 import { UploadedFile, ActiveTab } from '../types';
 
@@ -129,6 +130,14 @@ export default function DashboardLayout({
       icon: ShieldAlert, 
       badge: 'Audit',
       description: 'Filter Turnover x3 < Menang',
+      disabled: false
+    },
+    { 
+      id: 'filter-scatter' as ActiveTab, 
+      label: 'Filter Bonus Scatter', 
+      icon: Flame, 
+      badge: 'Baru',
+      description: 'Kroscek Data Doc vs Bonus SMB',
       disabled: false
     },
   ];

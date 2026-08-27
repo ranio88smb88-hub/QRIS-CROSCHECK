@@ -133,6 +133,22 @@ export default function Instructions({ onGoToUpload }: InstructionsProps) {
             </div>
           </div>
 
+          {/* Filter Bonus Scatter */}
+          <div className="bg-[#18181b] border border-amber-500/30 rounded-lg p-5 space-y-3.5 md:col-span-2">
+            <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs uppercase tracking-wide">
+              <Sparkles size={14} className="text-amber-400" />
+              <span>5. Filter Bonus Scatter (Kroscek Data di Doc vs Bonus SMB)</span>
+            </div>
+            <p className="text-xs text-[#a1a1aa] leading-relaxed">
+              Membandingkan <strong>User ID</strong> dan <strong>Nominal</strong> secara otomatis antara <strong>Data di Doc (Spreadsheet/Docs)</strong> dan <strong>File Bonus SMB (Approved Scatter)</strong>. Menampilkan selisih jika user hanya ada di satu file, atau jika nominal klaim berbeda.
+            </p>
+            <div className="bg-[#09090b] p-3 rounded border border-white/10 font-mono text-[10px] text-zinc-400 space-y-1">
+              <div className="text-amber-300 font-semibold uppercase">Mendukung Format Excel & Paste Langsung:</div>
+              <p className="text-zinc-300">Data Doc: <span className="text-white">27/08/2026 | saputra270 | https://prnt.sc/m_WmRdWNyogM | 15.000 | TK2E70T0JZ</span></p>
+              <p className="text-zinc-300">Bonus SMB: <span className="text-white">2026-08-03 00:10:43 | LIGABANDOT | yugivary | mahjong | 1600 | 3 | 15,000.00 | APPROVED</span></p>
+            </div>
+          </div>
+
         </div>
       </div>
 

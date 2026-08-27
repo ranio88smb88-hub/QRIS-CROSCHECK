@@ -19,6 +19,7 @@ import QrisCrossCheck from './components/QrisCrossCheck';
 import NaikSaldoQris from './components/NaikSaldoQris';
 import PeminjamanDana from './components/PeminjamanDana';
 import CroscekTurnover from './components/CroscekTurnover';
+import FilterBonusScatter from './components/FilterBonusScatter';
 import { UploadedFile, ActiveTab } from './types';
 
 export default function App() {
@@ -221,6 +222,12 @@ export default function App() {
           {activeTab === 'croscek-turnover' && (
             <div className="space-y-6">
               <CroscekTurnover />
+            </div>
+          )}
+
+          {activeTab === 'filter-scatter' && (
+            <div className="space-y-6">
+              <FilterBonusScatter />
             </div>
           )}
 
